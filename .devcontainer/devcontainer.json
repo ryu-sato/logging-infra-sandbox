@@ -12,14 +12,24 @@
 		},
 		"ghcr.io/devcontainers/features/git:1": "latest",
 		"ghcr.io/jsburckhardt/devcontainer-features/uv:1": "latest",
-		"ghcr.io/devcontainers-extra/features/claude-code:2": {}
-	}
+		"ghcr.io/devcontainers-extra/features/claude-code:2": {},
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+			"minikube": "none"
+		},
+		"ghcr.io/devcontainers-extra/features/kind:1": {}
+	},
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	// Grafana (UI) and Loki (log push API), reachable at localhost once bootstrap.sh's
+	// kubectl port-forwards are up.
+	"forwardPorts": [3000, 3100],
+	"portsAttributes": {
+		"3000": { "label": "Grafana", "onAutoForward": "notify" },
+		"3100": { "label": "Loki API", "onAutoForward": "silent" }
+	},
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "docker --version",
+	// Creates the kind cluster and installs Loki + Grafana; re-run on every start since
+	// the cluster/port-forwards don't survive a container restart.
+	"postStartCommand": "bash .devcontainer/scripts/bootstrap.sh"
 
 	// Configure tool-specific properties.
 	// "customizations": {},

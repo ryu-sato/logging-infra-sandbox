@@ -1,0 +1,32 @@
+# Minimal single-binary Loki for the devcontainer sandbox (no object storage, no HA).
+# Chart: grafana/loki (https://github.com/grafana/loki/tree/main/production/helm/loki)
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  useTestSchema: true
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  limits_config:
+    retention_period: 24h
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false
+
+# Skip components not needed for a single-binary sandbox
+gateway:
+  enabled: false
+minio:
+  enabled: false
+test:
+  enabled: false
+lokiCanary:
+  enabled: false
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
