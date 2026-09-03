@@ -16,7 +16,8 @@
 		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
 			"minikube": "none"
 		},
-		"ghcr.io/devcontainers-extra/features/kind:1": {}
+		"ghcr.io/devcontainers-extra/features/kind:1": {},
+		"ghcr.io/devcontainers-extra/features/kubie:1": {}
 	},
 
 	// Grafana (UI) and Loki (log push API), reachable at localhost once bootstrap.sh's
@@ -26,6 +27,9 @@
 		"3000": { "label": "Grafana", "onAutoForward": "notify" },
 		"3100": { "label": "Loki API", "onAutoForward": "silent" }
 	},
+
+	// Installs k9s once at container creation (no devcontainer feature exists for it).
+	"postCreateCommand": "bash .devcontainer/scripts/install-k9s.sh",
 
 	// Creates the kind cluster and installs Loki + Grafana; re-run on every start since
 	// the cluster/port-forwards don't survive a container restart.
