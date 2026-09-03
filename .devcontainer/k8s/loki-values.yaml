@@ -16,6 +16,23 @@ singleBinary:
   replicas: 1
   persistence:
     enabled: false
+  # persistence.enabled=false leaves /var/loki unmounted entirely (the chart
+  # only mounts it via the PVC path), so provide an emptyDir explicitly.
+  extraVolumes:
+    - name: storage
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: storage
+      mountPath: /var/loki
+
+# Explicitly zero out the simple-scalable targets; the chart's validate.yaml
+# rejects nonzero replicas on both singleBinary and read/write/backend at once.
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
 
 # Skip components not needed for a single-binary sandbox
 gateway:
