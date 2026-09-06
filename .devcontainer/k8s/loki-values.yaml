@@ -17,6 +17,9 @@ singleBinary:
   persistence:
     enabled: true
     size: 10Gi
+    # Binds to the static hostPath PV in loki-pv.yaml instead of kind's default
+    # local-path provisioner, so data survives kind cluster recreation.
+    storageClass: loki-local-storage
 
 # Explicitly zero out the simple-scalable targets; the chart's validate.yaml
 # rejects nonzero replicas on both singleBinary and read/write/backend at once.

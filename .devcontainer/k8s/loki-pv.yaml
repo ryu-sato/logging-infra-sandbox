@@ -1,0 +1,25 @@
+# Static hostPath storage for Loki so its data survives kind cluster recreation.
+# The path below is bind-mounted into the kind node via extraMounts (see
+# bootstrap.sh), which in turn maps to a directory under the workspace on the
+# real host, so it outlives both container restarts and devcontainer rebuilds.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: loki-local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: loki-data
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: loki-local-storage
+  hostPath:
+    path: /mnt/loki-data
+    type: DirectoryOrCreate

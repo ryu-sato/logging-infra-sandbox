@@ -33,7 +33,9 @@
 	"postCreateCommand": "bash .devcontainer/scripts/install-k9s.sh",
 
 	// Creates the kind cluster, installs Loki + Grafana, and starts Grafana Alloy to tail
-	// Docker container logs; re-run on every start since none of this survives a restart.
+	// Docker container logs; re-run on every start since the cluster itself doesn't survive
+	// a restart or rebuild. Loki's log data does survive, via a hostPath PV backed by
+	// .devcontainer/.data/loki (see k8s/loki-pv.yaml and scripts/bootstrap.sh).
 	"postStartCommand": "bash .devcontainer/scripts/bootstrap.sh"
 
 	// Configure tool-specific properties.

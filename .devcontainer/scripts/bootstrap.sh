@@ -13,6 +13,13 @@ GRAFANA_PORT=3000
 LOKI_PORT=3100
 ALLOY_CONTAINER="alloy"
 
+# Lives under the workspace, which is bind-mounted from the real host, so it
+# survives both container restarts and devcontainer rebuilds (unlike the
+# kind node itself, which is just a container in the ephemeral nested
+# dockerd). Bind-mounted into the kind node via extraMounts below, and from
+# there into Loki's pod as a static hostPath PV (see k8s/loki-pv.yaml).
+LOKI_DATA_DIR="${SCRIPT_DIR}/../.data/loki"
+
 log() { echo "[bootstrap] $*"; }
 
 log "Waiting for the Docker daemon..."
@@ -26,20 +33,39 @@ cluster_reachable() {
   kubectl --context "kind-${CLUSTER_NAME}" cluster-info >/dev/null 2>&1
 }
 
+mkdir -p "${LOKI_DATA_DIR}"
+chmod 0777 "${LOKI_DATA_DIR}"
+LOKI_DATA_DIR="$(cd "${LOKI_DATA_DIR}" && pwd)"
+
+KIND_CONFIG="$(mktemp)"
+trap 'rm -f "${KIND_CONFIG}"' EXIT
+cat >"${KIND_CONFIG}" <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraMounts:
+      - hostPath: ${LOKI_DATA_DIR}
+        containerPath: /mnt/loki-data
+EOF
+
 if kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"; then
   if cluster_reachable; then
     log "kind cluster '${CLUSTER_NAME}' already running"
   else
     log "kind cluster '${CLUSTER_NAME}' exists but is unreachable, recreating"
     kind delete cluster --name "${CLUSTER_NAME}"
-    kind create cluster --name "${CLUSTER_NAME}" --wait 120s
+    kind create cluster --name "${CLUSTER_NAME}" --config "${KIND_CONFIG}" --wait 120s
   fi
 else
   log "Creating kind cluster '${CLUSTER_NAME}'"
-  kind create cluster --name "${CLUSTER_NAME}" --wait 120s
+  kind create cluster --name "${CLUSTER_NAME}" --config "${KIND_CONFIG}" --wait 120s
 fi
 
 kubectl config use-context "kind-${CLUSTER_NAME}" >/dev/null
+
+log "Applying static storage for Loki (persists across cluster recreation)"
+kubectl apply -f "${K8S_DIR}/loki-pv.yaml"
 
 log "Installing Loki + Grafana via Helm"
 helm repo add grafana https://grafana.github.io/helm-charts --force-update >/dev/null
