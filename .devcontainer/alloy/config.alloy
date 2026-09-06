@@ -14,6 +14,12 @@ discovery.relabel "containers" {
     regex         = "/(.*)"
     target_label  = "container"
   }
+
+  rule {
+    source_labels = ["__meta_docker_port_public_ip"]
+    regex         = "(.*)"
+    target_label  = "public_ip"
+  }
 }
 
 loki.source.docker "default" {
