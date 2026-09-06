@@ -20,19 +20,20 @@
 		"ghcr.io/devcontainers-extra/features/kubie:1": {}
 	},
 
-	// Grafana (UI) and Loki (log push API), reachable at localhost once bootstrap.sh's
-	// kubectl port-forwards are up.
-	"forwardPorts": [3000, 3100],
+	// Grafana (UI), Loki (log push API), and the Grafana Alloy UI, reachable at localhost
+	// once bootstrap.sh's kubectl port-forwards and the Alloy container are up.
+	"forwardPorts": [3000, 3100, 12345],
 	"portsAttributes": {
 		"3000": { "label": "Grafana", "onAutoForward": "notify" },
-		"3100": { "label": "Loki API", "onAutoForward": "silent" }
+		"3100": { "label": "Loki API", "onAutoForward": "silent" },
+		"12345": { "label": "Alloy UI", "onAutoForward": "silent" }
 	},
 
 	// Installs k9s once at container creation (no devcontainer feature exists for it).
 	"postCreateCommand": "bash .devcontainer/scripts/install-k9s.sh",
 
-	// Creates the kind cluster and installs Loki + Grafana; re-run on every start since
-	// the cluster/port-forwards don't survive a container restart.
+	// Creates the kind cluster, installs Loki + Grafana, and starts Grafana Alloy to tail
+	// Docker container logs; re-run on every start since none of this survives a restart.
 	"postStartCommand": "bash .devcontainer/scripts/bootstrap.sh"
 
 	// Configure tool-specific properties.

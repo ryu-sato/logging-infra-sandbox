@@ -1,0 +1,31 @@
+// Grafana Alloy config for the devcontainer sandbox.
+// Discovers every container on the host's Docker daemon, tails their logs via
+// the Docker API, and forwards them to the in-cluster Loki (reached over
+// --network host, since Alloy runs as a sibling container to kind/Loki).
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "default" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  labels        = {job = "devcontainer"}
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://localhost:3100/loki/api/v1/push"
+  }
+}
